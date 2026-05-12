@@ -12,6 +12,22 @@
             "driver": "PostgreSQL",
             "name": "app2_railway",
             "connectString": "postgresql://postgres:gSOgEzikFRTLZRbAuKSYGhGfZrXRZiBC@interchange.proxy.rlwy.net:31690/railway"
+        },
+        {
+            "pgOptions": {
+                "ssl": {
+                    "rejectUnauthorized": false
+                }
+            },
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "sshOptions": {
+                "port": 22
+            },
+            "server": "localhost",
+            "driver": "PostgreSQL",
+            "name": "app12_db_railwy",
+            "connectString": "postgresql://postgres:ToiodWcahFdmxSDCdICvkUDruvJBjLQz@mainline.proxy.rlwy.net:18982/railway"
         }
     ]
 }
