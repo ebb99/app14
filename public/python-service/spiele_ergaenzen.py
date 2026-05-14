@@ -6,6 +6,10 @@ from tabulate import tabulate
 from datetime import datetime
 import json
 # --- Unterprogramme (Funktionen) ---
+def spiele_löschen_statuswort(cursor, connection, status_variable):
+    delete_query = "DELETE FROM spiele WHERE statuswort = %s;"
+    cursor.execute(delete_query, [status_variable])
+    connection.commit()
 
 def leeren_tabelle_spiele2(cursor):
     cursor.execute("TRUNCATE TABLE spiele2 RESTART IDENTITY;")
@@ -112,7 +116,9 @@ def main():
 ###########################################
         leeren_tabelle_spiele2(cursor)
         connection.commit()  # Änderungen speichern
-       
+
+        
+
 ###########################################
                 # Fügen Sie diese Zeilen einmalig vor Ihrer Schleife ein, 
         # um den Datenbank-Zähler zu reparieren:
@@ -239,9 +245,14 @@ def main():
             print(f"Es wurden insgesamt {len(spiele_zum_einfuegen)} von {len(spiele_alt2)} Spielen verarbeitet und angehängt.")
         else:
             print("Keine Datensätze erfüllten die Kriterien (weder 'planung' noch 'erhalten'). Nichts angehängt.")
+##########################
 
 
-            
+        spiele_löschen_statuswort(cursor, connection, 'erhalten_neu') 
+        spiele_löschen_statuswort(cursor, connection, 'planung_neu') 
+
+
+########################################################################           
     except (Exception, psycopg2.Error) as error:
         print("Fehler im Hauptprogramm:", error)
 

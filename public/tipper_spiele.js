@@ -76,6 +76,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         $("tipper_spieleBtn")?.addEventListener("click", () => {
             location.href = "tipper_spiele.html";
         });
+        $("extratip")?.addEventListener("click", () => {
+            location.href = "extra_tipp.html";
+        });
 
            //await ladeGeplanteSpiele();
        

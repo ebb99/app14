@@ -1,0 +1,82 @@
+
+// Scripts 
+async function meldungAn(msg,txt,color) {
+    const msgEl = document.getElementById(msg);
+    msgEl.style.color = color;
+    msgEl.innerText = txt;
+    msgEl.style.fontWeight = "bold";
+}
+
+
+
+
+let spiele = [];
+
+// -------------------------------------------------------------
+// BEENDETE SPIELE LADEN
+// -------------------------------------------------------------
+async function loadErgebnisse() {
+    const res = await fetch("/api/spiele/beendet");
+    spiele = await res.json();
+
+    const tbody = document.getElementById("ergTable");
+    tbody.innerHTML = "";
+
+    spiele.forEach(s => {
+        tbody.innerHTML += `
+            <tr>
+                <td>${s.id}</td>
+                <td>${s.spielbeginn_formatiert}</td>
+                <td>${s.heim_name}</td>
+                <td>${s.gast_name}</td>
+                <td><input id="home_${s.id}" type="number" min="0" value="${s.heimtore ?? ""}"></td>
+                <td><input id="gast_${s.id}" type="number" min="0" value="${s.gasttore ?? ""}"></td>
+            </tr>
+        `;
+    });
+}
+
+// -------------------------------------------------------------
+// ALLE SPEICHERN
+// -------------------------------------------------------------
+async function saveAll() {
+    const updates = spiele.map(s => ({
+        id: s.id,
+        heimtore: Number(document.getElementById("home_" + s.id).value),
+        gasttore: Number(document.getElementById("gast_" + s.id).value)
+    }));
+
+    const msg = document.getElementById("msg");
+    msg.style.color = "blue";
+    msg.innerText = "Speichern läuft...";
+
+    try {
+        const res = await fetch("/api/spiele/beendet/update", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(updates)
+        });
+
+        const json = await res.json();
+        console.log("SERVER ANTWORT:", json);
+
+        msg.style.color = "green";
+        msg.innerText = "Ergebnisse erfolgreich gespeichert!";
+
+        await loadErgebnisse();
+
+        setTimeout(() => msg.innerText = "", 5000);
+
+    } catch (err) {
+        msg.style.color = "red";
+        msg.innerText = "Fehler beim Speichern!";
+        console.error(err);
+    }
+}
+
+// -------------------------------------------------------------
+// AUTOMATISCH BEIM LADEN
+// -------------------------------------------------------------
+document.addEventListener("DOMContentLoaded", () => {
+    loadErgebnisse();
+});
