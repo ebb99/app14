@@ -10,60 +10,43 @@
  </head>
 
 <body>
-<main>
-<!-- ===================== -->
-<!-- Extra Tipp -->
-<!-- ===================== -->
- 
-<div id="testmeldung">
-  
-</div>
- 
-  
-<div id="top2">
-    <h2>Hallo  <span id="benutzername"></span>!</h2>
-    <button id="logoutBtn">Logout</button>
-    <!-- <button id="tipper_spieleBtn">zur Spielübersicht</button> -->
-</div>
 
+    <h1>🏆 WM 2026 Extratipps</h1>
+    <p id="deadline-msg"></p>
+    <p id="error-message" class="error"></p>
 
-<h2>⚽ Extra Tipp:</h2>
+    <!-- Eigenen Tipp abgeben -->
+    <div class="form-section" id="tipp-form-container">
+        <h2>Mein Tipp</h2>
+        <form id="tipp-form">
+            <div class="form-group">
+                <label for="weltmeister">Weltmeister 2026:</label>
+                <input type="text" id="weltmeister" required placeholder="z.B. Deutschland">
+            </div>
+            <div class="form-group">
+                <label for="torschuetzenkoenig">Torschützenkönig:</label>
+                <input type="text" id="torschuetzenkoenig" required placeholder="z.B. Musiala">
+            </div>
+            <button type="submit" id="submit-btn">Tipp speichern</button>
+        </form>
+    </div>
 
-<!-- =====================
-    
-<select id="spieleSelect"> aaa</select>
- -->
+    <!-- Übersicht aller Tipps -->
+    <div class="list-section">
+        <h2>Alle Tipps der Teilnehmer</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Teilnehmer</th>
+                    <th>Weltmeister-Tipp</th>
+                    <th>Torschützenkönig-Tipp</th>
+                </tr>
+            </thead>
+            <tbody id="tipps-tabelle">
+                <!-- Dynamischer Inhalt via JS -->
+            </tbody>
+        </table>
+    </div>
 
-<table border="1" width="100%">
-    <tbody id="weltmeister"></tbody>
-</table>
-<!--
-<p>--</p>
--->
-<button id="saveAllTips">💾 Alle Tipps speichern</button>
-
-<div id="meldung"></div>
-
-<h2>🏆 Wer wird Weltmeister</h2>
-<table>
-    <thead>
-        <tr>
-            <th>Platz</th>
-            <th>Name</th>
-            <th>Punkte / Anzahl Tipps</th>
-        </tr>
-    </thead>
-    <tbody id="ranglisteBody"></tbody>
-</table>
-
-
-<h2>📋Torschützenkönig</h2>
-<div id="torschuetzenkoenig"></div>
-
-</main>
-<footer>
-    <p>© 2026 Eduard Ballweg. Diese Website ist ein privates, nicht kommerzielles Projekt im Rahmen eines Fußball-Tippspiels.</p>   
-    <a href="impressum_datenschutz.html">Impressum & Datenschutz</a>
-</footer>
 </body>
 </html>

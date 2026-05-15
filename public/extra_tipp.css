@@ -1,0 +1,190 @@
+:root {
+    --primary-color: #007BFF;
+    --primary-hover: #0056b3;
+    --bg-gray: #f8f9fa;
+    --border-color: #cccccc;
+    --text-muted: #666666;
+    --disabled-bg: #e9ecef;
+}
+
+body { 
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+    margin: 0; 
+    padding: 15px; 
+    background-color: var(--bg-gray);
+    color: #333333;
+    line-height: 1.5;
+}
+
+h1 {
+    font-size: 1.8rem;
+    margin-bottom: 5px;
+    text-align: center;
+}
+
+#deadline-msg {
+    text-align: center;
+    font-size: 0.95rem;
+    margin-bottom: 20px;
+}
+
+.form-section, .list-section { 
+    background: #ffffff;
+    margin-bottom: 20px; 
+    padding: 20px; 
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    border: 1px solid rgba(0,0,0,0.08);
+}
+
+h2 {
+    font-size: 1.4rem;
+    margin-top: 0;
+    margin-bottom: 15px;
+    border-bottom: 2px solid var(--bg-gray);
+    padding-bottom: 8px;
+}
+
+.form-group { 
+    margin-bottom: 15px; 
+}
+
+label { 
+    display: block; 
+    font-weight: 600;
+    margin-bottom: 6px;
+    font-size: 0.95rem;
+}
+
+input[type="text"] { 
+    width: 100%; 
+    padding: 12px; 
+    box-sizing: border-box; 
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 1rem; /* Verhindert automatisches Zoomen unter iOS */
+    transition: border-color 0.2s;
+}
+
+input[type="text"]:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+button { 
+    width: 100%; /* Volle Breite auf Mobilgeräten */
+    padding: 14px; 
+    background: var(--primary-color); 
+    color: white; 
+    border: none; 
+    border-radius: 8px;
+    cursor: pointer; 
+    font-size: 1rem;
+    font-weight: bold;
+    transition: background 0.2s;
+}
+
+button:active {
+    background: var(--primary-hover);
+}
+
+button:disabled { 
+    background: var(--border-color); 
+    color: var(--text-muted);
+    cursor: not-allowed; 
+}
+
+.error { 
+    color: #dc3545; 
+    font-weight: bold; 
+    text-align: center;
+}
+
+/* --- Responsive Tabellen-Optimierung für Smartphones --- */
+table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    margin-top: 10px; 
+}
+
+th, td { 
+    padding: 12px; 
+    text-align: left; 
+}
+
+/* Styling für Desktop */
+@media (min-width: 600px) {
+    table, th, td {
+        border: 1px solid #dee2e6;
+    }
+    th { 
+        background-color: #f1f3f5; 
+    }
+    .disabled-view { 
+        color: var(--text-muted); 
+        background-color: var(--disabled-bg); 
+    }
+    button {
+        width: auto; /* Desktop-Breite für den Button */
+        min-width: 150px;
+    }
+}
+
+/* Mobile Ansicht: Tabelle in Karten umwandeln */
+@media (max-width: 599px) {
+    table, thead, tbody, th, td, tr { 
+        display: block; 
+    }
+    
+    thead tr { 
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+    }
+    
+    tr { 
+        background: #ffffff;
+        border: 1px solid #dee2e6; 
+        border-radius: 8px;
+        margin-bottom: 12px;
+        padding: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+    
+    .disabled-view { 
+        opacity: 0.6; /* Graut die gesamte Karte für andere User aus */
+        background-color: var(--disabled-bg);
+    }
+    
+    td { 
+        border: none;
+        position: relative;
+        padding-left: 45%; 
+        padding-top: 10px;
+        padding-bottom: 10px;
+        font-size: 0.95rem;
+    }
+    
+    td:not(:last-child) {
+        border-bottom: 1px solid #f1f3f5;
+    }
+    
+    /* Spaltenbeschriftung via Daten-Label simulieren */
+    td:before { 
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        width: 40%; 
+        padding-right: 10px; 
+        white-space: nowrap;
+        font-weight: bold;
+        color: var(--text-muted);
+    }
+    
+    td:nth-of-type(1) { padding-left: 10px; background-color: #f1f3f5; border-radius: 4px; }
+    td:nth-of-type(1):before { content: ""; } /* Kein Label für den Usernamen, da er als Header fungiert */
+    
+    td:nth-of-type(2):before { content: "Weltmeister:"; }
+    td:nth-of-type(3):before { content: "Torschütze:"; }
+}

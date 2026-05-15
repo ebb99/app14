@@ -16,7 +16,7 @@ import psycopg2
 
 
 #localhost
-dbname = "app13_db"
+dbname = "app14_db"
 conn = psycopg2.connect(
     host="localhost",
     port=5432,
@@ -128,7 +128,16 @@ CREATE TABLE spiele2 (
  );
 """
 
-
+cmd18= """DROP TABLE IF EXISTS extratip"""
+cmd19 = """
+CREATE TABLE extratip (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(255) REFERENCES users(name) ON DELETE CASCADE UNIQUE,
+    weltmeister VARCHAR(255) NOT NULL,
+    torschuetzenkoenig VARCHAR(255) NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+"""
 
 
 
@@ -155,8 +164,8 @@ CREATE TABLE spiele2 (
 # cur.execute(cmd14) # löschen  Tabelle spielplan, falls sie schon existiert
 # cur.execute(cmd15) # spielplan anlegen 
 
-cur.execute(cmd16) # löschen  Tabelle spiele2 falls sie schon existiert
-cur.execute(cmd17) # spiele2 anlegen 
+cur.execute(cmd18) # löschen  Tabelle spiele2 falls sie schon existiert
+cur.execute(cmd19) # spiele2 anlegen 
 conn.commit()
 
 print("✅ Aktion erfolgreich!")

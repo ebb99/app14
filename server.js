@@ -70,13 +70,22 @@ function requireAdmin(req, res, next) {
     }
     next();
 }
-
+// alt requiretipper
+// function requireTipper(req, res, next) {
+//     if (!req.session.user || req.session.user.role !== "tipper") {
+//         return res.status(403).json({ error: "Nur Tipper erlaubt" });
+//     }
+//     next();
+// }
 function requireTipper(req, res, next) {
-    if (!req.session.user || req.session.user.role !== "tipper") {
+    // Sicherer Schutz gegen "Cannot read properties of undefined"
+    if (!req.session?.user || req.session.user.role !== "tipper") {
         return res.status(403).json({ error: "Nur Tipper erlaubt" });
     }
     next();
 }
+
+
 
 // ===============================
 // Datenbank
@@ -129,6 +138,17 @@ cron.schedule("* * * * *", async () => {
     }
 });
 
+// Deadline festlegen: 10. Juni 2026 um 23:59:59 Uhr
+const WM_DEADLINE = new Date("2026-06-10T23:59:59");
+
+// Middleware zur serverseitigen Prüfung der Abgabefrist
+function checkWMDeadline(req, res, next) {
+    if (new Date() > WM_DEADLINE) {
+        return res.status(403).json({ error: "Die Abgabefrist am 10.06.2026 ist abgelaufen!" });
+    }
+    next();
+}
+
 
 // ===============================
 // Session / Auth API
@@ -173,6 +193,45 @@ app.post("/api/logout", (req, res) => {
 app.get("/api/session", (req, res) => {
     res.json({ user: req.session.user || null });
 });
+
+// 2. Alle Tipps abrufen (Erfordert Login, Sichtbarkeit für alle Teilnehmer)
+app.get("/api/extratip", requireLogin, async (req, res) => {
+    try {
+        const result = await pool.query(
+            "SELECT username, weltmeister, torschuetzenkoenig FROM extratip ORDER BY username ASC"
+        );
+        res.json(result.rows);
+    } catch (err) {
+        console.error("Fehler beim Laden der Extratipps:", err);
+        res.status(500).json({ error: "Datenbankfehler beim Laden." });
+    }
+});
+
+// 3. Tipp abgeben oder aktualisieren (Erfordert die Rolle 'tipper' und Einhaltung der Deadline)
+app.post("/api/extratip", requireLogin, requireTipper, checkWMDeadline, async (req, res) => {
+    const { weltmeister, torschuetzenkoenig } = req.body;
+    const username = req.session.user.name; // Sicher aus der verifizierten Session
+
+    if (!weltmeister || !torschuetzenkoenig) {
+        return res.status(400).json({ error: "Alle Felder müssen ausgefüllt sein." });
+    }
+
+    try {
+        const queryText = `
+            INSERT INTO extratip (username, weltmeister, torschuetzenkoenig, updated_at)
+            VALUES ($1, $2, $3, NOW())
+            ON CONFLICT (username) 
+            DO UPDATE SET weltmeister = EXCLUDED.weltmeister, torschuetzenkoenig = EXCLUDED.torschuetzenkoenig, updated_at = NOW();
+        `;
+        
+        await pool.query(queryText, [username, weltmeister.trim(), torschuetzenkoenig.trim()]);
+        res.json({ success: true, message: "Tipp erfolgreich gespeichert." });
+    } catch (err) {
+        console.error("Fehler beim Speichern des Extratipps:", err);
+        res.status(500).json({ error: "Datenbankfehler beim Speichern." });
+    }
+});
+
 
 
 
