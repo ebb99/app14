@@ -100,10 +100,42 @@ const isRailway =
 
 // });
 
-const pool = new pg.Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false
-});
+// const pool = new pg.Pool({
+//     connectionString: process.env.DATABASE_URL,
+//     ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false
+// });
+
+// const pool = new pg.Pool({
+//     connectionString: process.env.DATABASE_URL,
+//     ssl: process.env.NODE_ENV === "production" 
+//         ? { rejectUnauthorized: false } 
+//         : false // Deaktiviert SSL für den lokalen Betrieb komplett
+// });
+
+// Ermittelt, ob die DATABASE_URL den Begriff "localhost" oder "127.0.0.1" enthält
+const isLocalhost = process.env.DATABASE_URL && (
+    process.env.DATABASE_URL.includes("localhost") || 
+    process.env.DATABASE_URL.includes("127.0.0.1")
+);
+
+let poolConfig = {
+    connectionString: process.env.DATABASE_URL
+};
+
+// Wenn es NICHT lokal ist und wir in Produktion sind (Railway) -> SSL aktivieren
+if (!isLocalhost && process.env.NODE_ENV === "production") {
+    poolConfig.ssl = { rejectUnauthorized: false };
+} else {
+    // Lokal: SSL zwingend abschalten
+    poolConfig.ssl = false;
+    
+    // Falls in Ihrer lokalen DATABASE_URL "?sslmode=require" steht, schneiden wir es hier ab
+    if (poolConfig.connectionString && poolConfig.connectionString.includes("?sslmode=")) {
+        poolConfig.connectionString = poolConfig.connectionString.split("?sslmode=")[0];
+    }
+}
+
+const pool = new pg.Pool(poolConfig);
 
 
 

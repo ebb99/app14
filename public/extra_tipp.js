@@ -7,7 +7,14 @@ document.addEventListener("DOMContentLoaded", () => {
     loadTipps();
     
     document.getElementById("tipp-form").addEventListener("submit", saveTipp);
+
+            $("zurueck")?.addEventListener("click", () => {
+            window.location.href = "tipper_spiele.html";
+        });
 });
+function $(id) {
+    return document.getElementById(id);
+}
 
 async function fetchCurrentUser() {
     try {

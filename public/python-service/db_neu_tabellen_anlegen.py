@@ -132,7 +132,7 @@ cmd18= """DROP TABLE IF EXISTS extratip"""
 cmd19 = """
 CREATE TABLE extratip (
     id SERIAL PRIMARY KEY,
-    username VARCHAR(255) REFERENCES users(name) ON DELETE CASCADE UNIQUE,
+    name VARCHAR(255) REFERENCES users(name) ON DELETE CASCADE UNIQUE,
     weltmeister VARCHAR(255) NOT NULL,
     torschuetzenkoenig VARCHAR(255) NOT NULL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
