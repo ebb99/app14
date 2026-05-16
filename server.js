@@ -714,8 +714,9 @@ app.get("/api/tips", requireLogin, async (req, res) => {
             FROM tips t
             JOIN users u ON u.id = t.user_id
             JOIN spiele s ON s.id = t.spiel_id
-
+            WHERE s.statuswort != 'geplant'
             ORDER BY s.anstoss DESC, u.name ASC
+
             
         `);
 

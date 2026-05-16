@@ -199,52 +199,47 @@ def main():
 
 
         print("neu")
-       
+
         spiele_alt2 = hole_spiele_alt(cursor)
         spiele_zum_einfuegen = []
-        
-        # EINE Schleife für ALLE Prüfungen
+
         for spiel in spiele_alt2:
-            
+    
             # --- PRÜFUNG 1: planung ---
             if spiel['statuswort'] == 'planung':
                 spiel_kopie = dict(spiel)
-                
-                # Alle denkbaren ID-Spalten sicher entfernen
                 spiel_kopie.pop('id', None)
                 spiel_kopie.pop('spiel_id', None)
                 
-                spiel_kopie['statuswort'] = 'planung_neu'
+                spiel_kopie['statuswort'] = 'geplant'
                 spiele_zum_einfuegen.append(spiel_kopie)
 
             # --- PRÜFUNG 2: erhalten ---
             elif spiel['statuswort'] == 'erhalten':
                 spiel_kopie = dict(spiel)
-                
-                # Alle denkbaren ID-Spalten sicher entfernen
                 spiel_kopie.pop('id', None)
                 spiel_kopie.pop('spiel_id', None)
                 
-                spiel_kopie['statuswort'] = 'erhalten_neu'
+                spiel_kopie['statuswort'] = 'ausgewertet'
                 spiele_zum_einfuegen.append(spiel_kopie)
 
-        # Erst NACHDEM alle Spiele geprüft wurden, wird EINMAL in die DB geschrieben
+# Verarbeitung in der Datenbank
         if len(spiele_zum_einfuegen) > 0:
+            # Die Query nutzt nun DO UPDATE bei einem Konflikt mit der Kennung
             insert_query = """
             INSERT INTO spiele (heimverein, gastverein, heimtore, gasttore, anstoss, heimbild, gastbild, spielgruppe, statuswort, kennung)
             VALUES (%(heimverein)s, %(gastverein)s, %(heimtore)s, %(gasttore)s, %(anstoss)s, %(heimbild)s, %(gastbild)s, %(spielgruppe)s, %(statuswort)s, %(kennung)s)
-            ON CONFLICT (kennung) DO NOTHING;
+            ON CONFLICT (kennung) DO UPDATE SET
+                heimtore = EXCLUDED.heimtore,
+                gasttore = EXCLUDED.gasttore,
+                statuswort = EXCLUDED.statuswort;
             """
-            if len(spiele_zum_einfuegen) > 0:
-                print("--- DEBUGGING: Erster Datensatz vor dem Einfügen ---")
-                print(spiele_zum_einfuegen[0]) 
-                print("--------------------------------------------------")
-
             cursor.executemany(insert_query, spiele_zum_einfuegen)
             connection.commit()
-            print(f"Es wurden insgesamt {len(spiele_zum_einfuegen)} von {len(spiele_alt2)} Spielen verarbeitet und angehängt.")
+            print(f"Es wurden insgesamt {len(spiele_zum_einfuegen)} von {len(spiele_alt2)} Spielen verarbeitet (eingefügt oder aktualisiert).")
         else:
-            print("Keine Datensätze erfüllten die Kriterien (weder 'planung' noch 'erhalten'). Nichts angehängt.")
+            print("Keine Datensätze erfüllten die Kriterien (weder 'planung' noch 'erhalten'). Nichts unternommen.")
+
 ##########################
 
 

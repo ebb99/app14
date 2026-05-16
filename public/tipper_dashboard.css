@@ -1,5 +1,5 @@
 
-        body {
+        /* body {
             font-family: Arial, sans-serif;
             padding: 16px;
             max-width: 520px;
@@ -54,7 +54,7 @@
         }
 
         /* Tipps */
-        .spiel {
+        /* .spiel {
             border: 1px solid #ccc;
             border-radius: 8px;
             margin-bottom: 16px;
@@ -77,13 +77,18 @@
     vertical-align: middle;
     margin-right: 6px;
 }
+*/
 
-.tipp {
+
+.tipp
+ {
   display: flex;
   gap: 20px; /* Abstand zwischen den Spalten */
   border-bottom: 1px solid #ccc; /* Optional: Trennlinie */
   padding: 5px 0;
 }
+
+
 
 /* Alle Spalten standardmäßig links */
 .tipp span {
@@ -163,9 +168,9 @@
 .status-beendet {
     color: blue;
     font-weight: bold;
-}
+} */
 
 .status-ausgewertet {
     color: black;
     font-weight: bold;
-}
+} 
