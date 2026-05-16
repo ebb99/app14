@@ -94,11 +94,20 @@ const isRailway =
     process.env.DATABASE_URL &&
     !process.env.DATABASE_URL.includes("localhost");
 
+// const pool = new pg.Pool({
+//     connectionString: process.env.DATABASE_URL,
+//     ssl: isRailway ? { rejectUnauthorized: false } : false
+
+// });
+
 const pool = new pg.Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: isRailway ? { rejectUnauthorized: false } : false
-
+    ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false
 });
+
+
+
+
 pool.on("connect", async (client) => {
   await client.query("SET TIME ZONE 'Europe/Berlin'");
 });
