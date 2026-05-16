@@ -235,9 +235,17 @@ app.post("/api/extratip", requireLogin, requireTipper, checkWMDeadline, async (r
         
         await pool.query(queryText, [username, weltmeister.trim(), torschuetzenkoenig.trim()]);
         res.json({ success: true, message: "Tipp erfolgreich gespeichert." });
-    } catch (err) {
-        console.error("Fehler beim Speichern des Extratipps:", err);
-        res.status(500).json({ error: "Datenbankfehler beim Speichern." });
+    // } catch (err) {
+        // console.error("Fehler beim Speichern des Extratipps:", err);
+        // res.status(500).json({ error: "Datenbankfehler beim Speichern." });
+// Ändern Sie den catch-Block in Ihrer POST-Route temporär so ab:
+    }catch (err) {
+        console.error("Fehler beim Speichern:", err);
+        // Sendet die exakte Fehlermeldung der Datenbank an das Frontend zurück
+        res.status(500).json({ error: `Datenbankfehler: ${err.message}`, detail: err.detail });
+    
+
+
     }
 });
 
