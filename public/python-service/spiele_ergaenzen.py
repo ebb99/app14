@@ -11,36 +11,9 @@ def spiele_löschen_statuswort(cursor, connection, status_variable):
     cursor.execute(delete_query, [status_variable])
     connection.commit()
 
-def leeren_tabelle_spiele2(cursor):
-    cursor.execute("TRUNCATE TABLE spiele2 RESTART IDENTITY;")
-   
-def hole_spiele2(cursor):
-    cursor.execute("SELECT * FROM spiele2;")
-    return cursor.fetchall()
-
 
 def alle_spiele_holen(cursor):
     cursor.execute("SELECT * FROM spiele_web;")
-    return cursor.fetchall()
-
-def hole_spiele_alt(cursor):
-    query = """
-    SELECT
-    v_heim.vereinsname AS heimverein,
-    v_gast.vereinsname as gastverein,
-    s.heimtore as heimtore,
-    s.gasttore as gasttore,
-    s.anstoss as anstoss,
-    v_heim.url AS heimbild,
-    v_gast.url AS gastbild,
-    s.spielgruppe as spielgruppe,
-    s.statuswort as statuswort, 
-    s.kennung as kennung
-    FROM spiele2 s
-    JOIN vereine v_heim ON s.heim_id = v_heim.id
-    JOIN vereine v_gast ON s.gast_id = v_gast.id;
-    """
-    cursor.execute(query)
     return cursor.fetchall()
 
 def hole_vereine(cursor):
@@ -114,8 +87,7 @@ def main():
         # connection.commit()  # Änderungen speichern
 
 ###########################################
-        leeren_tabelle_spiele2(cursor)
-        connection.commit()  # Änderungen speichern
+
 
         
 
@@ -129,13 +101,12 @@ def main():
 
         
 
-        spiele2= hole_spiele2(cursor)
+   
         print("\n--- Aktuelle Spiele in spiele2 ---") 
         colnames = [desc[0] for desc in cursor.description]
-        data_spiele2 = [spiel2.values() for spiel2 in spiele2]
+
         # print(tabulate(data_spiele2, headers=colnames, tablefmt='grid')) 
-        if not spiele2:
-            print("\n   Hinweis: Die Tabelle spiele2 enthält aktuell keine Datensätze.")
+
 
         spiele_web = alle_spiele_holen(cursor)
         print("\n--- Aktuelle Spiele in spiele_web ---") 
@@ -200,10 +171,10 @@ def main():
 
         print("neu")
 
-        spiele_alt2 = hole_spiele_alt(cursor)
+   
         spiele_zum_einfuegen = []
 
-        for spiel in spiele_alt2:
+        for spiel_web in spiele_web:
     
             # --- PRÜFUNG 1: planung ---
             if spiel['statuswort'] == 'planung':
@@ -236,15 +207,12 @@ def main():
             """
             cursor.executemany(insert_query, spiele_zum_einfuegen)
             connection.commit()
-            print(f"Es wurden insgesamt {len(spiele_zum_einfuegen)} von {len(spiele_alt2)} Spielen verarbeitet (eingefügt oder aktualisiert).")
+
         else:
             print("Keine Datensätze erfüllten die Kriterien (weder 'planung' noch 'erhalten'). Nichts unternommen.")
 
 ##########################
 
-
-        spiele_löschen_statuswort(cursor, connection, 'erhalten_neu') 
-        spiele_löschen_statuswort(cursor, connection, 'planung_neu') 
 
 
 ########################################################################           
