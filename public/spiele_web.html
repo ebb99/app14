@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>spiele_web</title>
+    <link rel="stylesheet" href="spiele_web.css">
+    <script src="/auth.js" defer></script>
+    <!-- KORREKTUR 1: 'defer' hinzugefügt, damit das HTML vor dem JS geladen ist -->
+    <script src="/spiele_web.js" defer></script> 
+</head>
+<body>
+<header>
+    <h1>spiele_web ergänzen</h1>
+    <button onclick="window.location.href='admin_dashboard.html'">zurück zum admin dashboard</button> 
+</header>
+
+<main>
+    <section id="spalte1">
+
+    </section>
+
+   <section id="spalte2">
+
+           <h3>Gruppen</h3>
+    <div class="zeile1">
+        <input list="gruppenliste" id="gruppenSelect" placeholder="Gruppe wählen">
+        <datalist id="gruppenliste"></datalist>
+    </div>
+        <h3>spiele_web</h3>
+    <table class="spiele-tabelle">
+        <thead>
+            <tr>
+                <th>Spieltag</th>
+                <th>Kennung</th>
+                <th>score</th>
+                <th>Planung</th>
+                <th>Ergebniss</th>               
+            </tr>
+        </thead>
+        <tbody id="SpieleTableBody">
+            <!-- Hier fügt JavaScript die Zeilen ein -->
+        </tbody>
+    </table>
+    </section>
+
+   <section id="spalte3">
+        <h3>spiele_aktuell</h3>
+    <table class="spiele-tabelle">
+        <thead>
+            <tr>
+                <th>Spieltag</th>
+                <th>Gruppe</th>
+                <th>Kennung</th>
+                <th>Anstoss</th>
+                <th>Ergebniss</th>               
+            </tr>
+        </thead>
+        <tbody id="SpieleTableBodyAktuell">
+            <!-- Hier fügt JavaScript die Zeilen ein -->
+        </tbody>
+    </table>
+    </section>
+
+
+
+
+</main>
+
+</body>
+</html>

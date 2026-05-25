@@ -1,0 +1,95 @@
+body { 
+font-family: Arial; 
+padding: 20px; 
+}
+
+header {
+
+background: white;
+color: black;
+border-style:  solid;
+padding: 1rem;
+width:auto
+}
+
+
+
+main {
+  grid-area: main;
+  display: grid;
+  /* grid-template-columns:minmax(100px, 1fr) 2.0fr 1.0fr 1.0fr ; */
+  grid-template-columns: 0% 45% 55% 0%;
+   gap: 0.2rem;
+
+  
+  background: #eee;
+    padding: 1rem;
+}
+
+button {
+  background: blue;
+  color: white;
+  border-style:  solid;
+  border-color: white;
+  padding: 0.5rem;
+  height: 40px;
+  width:fit-content;
+  margin-bottom: 10px;
+}
+h2{
+  color: rgb(20, 37, 53);
+  font-size: 1.5rem;
+}
+
+td {
+  background: white;
+  /* display: flex; */
+  justify-content: center; /* horizontal */
+  /* align-items: center;     vertikal */
+  /* text-align: center; */
+  padding: 0.2rem;
+  margin-right: 20px;
+}
+
+
+
+  
+#spalte1 {
+  background: white;
+  border-style: solid;
+  border-color: red;
+  text-align: center;
+  padding: 0.2rem;
+} 
+  
+#spalte2 {
+  background: white;
+  border-style: solid;
+  border-color: red;
+  text-align: center;
+  padding: 0.2rem;
+}
+#spalte3 {
+  background: white;
+  border-style: solid;
+  border-color: red;
+  text-align: center;
+  padding: 0.2rem;
+  /* align-items: center; */
+}
+#spalte4
+ {
+  background: white;
+  border-style: solid;
+  border-color: red;
+  text-align: center;
+  padding: 0.2rem;
+}
+#spalte5
+ {
+  background: white;
+  border-style: solid;
+  border-color: red;
+  text-align: center;
+  padding: 0.5rem;
+} 

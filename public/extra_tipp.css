@@ -76,7 +76,7 @@ button {
     /* width: 100%; Volle Breite auf Mobilgeräten */
     padding: 14px; 
     background: var(--primary-color); 
-    color: white; 
+    color: rgb(255, 255, 255); 
     border: none; 
     border-radius: 4px;
     cursor: pointer; 

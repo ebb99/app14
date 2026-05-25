@@ -135,23 +135,24 @@ if (!isLocalhost && process.env.NODE_ENV === "production") {
     }
 }
 
-const pool = new pg.Pool(poolConfig);
-
-
-
-
-pool.on("connect", async (client) => {
-  await client.query("SET TIME ZONE 'Europe/Berlin'");
+// 1. Die Zeitzone direkt über die poolConfig oder als Umgebungsvariable setzen
+// Das ist der stabilste Weg in PostgreSQL, da pg dies beim Verbindungsaufbau automatisch regelt.
+const pool = new pg.Pool({
+    ...poolConfig,
+    options: "-c timezone=Europe/Berlin" // Setzt die Zeitzone direkt für jede neue Verbindung
 });
 
+// 2. Den pool.on("connect") Event-Listener komplett ENTFERNEN.
+// Er wird nicht mehr benötigt und hat die Warnung verursacht.
 
-
-pool.connect()
-    .then(c => {
-        c.release();
-        console.log("PostgreSQL verbunden");
+// 3. Sicherer und sauberer Verbindungstest beim Serverstart
+pool.query("SELECT NOW()")
+    .then(() => {
+        console.log("PostgreSQL verbunden (Zeitzone: Europe/Berlin)");
     })
-    .catch(err => console.error("DB Fehler:", err));
+    .catch(err => {
+        console.error("DB Verbindungsfehler beim Start:", err);
+    });
 
 // ===============================
 // Cron Jobs
@@ -391,6 +392,20 @@ app.get("/api/gruppen", requireLogin, async (req, res) => {
     }
 });
 
+
+
+app.get("/api/gruppen_sort", requireAdmin, async (req, res) => {
+    try {
+        const result = await pool.query(
+            "SELECT id, gruppenname,position FROM gruppen_sort ORDER BY position"
+        );
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Gruppen laden fehlgeschlagen" });
+    }
+});
+
 app.post("/api/gruppen", requireAdmin, async (req, res) => {
     const { gruppenname } = req.body; 
     // console.log("BODY:", req.body);   // DEBUG
@@ -460,6 +475,25 @@ app.delete("/api/vereine/:id", requireAdmin, async (req, res) => {
         console.error(err);
         res.status(500).json({ error: "Verein löschen fehlgeschlagen" });
     }
+});
+
+// ===============================
+// Spiele + eigene Tipps neu
+// ===============================
+app.get("/api/spiele_web", requireAdmin, async (req, res) => {
+  try {
+    
+    // Platzhalter $1 hinzugefügt
+    const result = await pool.query(`
+      SELECT s.id, s.spieltag, s.datum, s.zeit, s.heimverein, s.gastverein, s.score, s.kennung 
+      FROM spiele_web s 
+      ORDER BY s.id ASC
+    `, ); 
+    res.json(result.rows);
+  } catch (err) {
+    console.error("❌ /spiele_web:", err);
+    res.status(500).json({ error: "spiele_web laden fehlgeschlagen" });
+  }
 });
 
 
@@ -714,11 +748,13 @@ app.get("/api/tips", requireLogin, async (req, res) => {
             FROM tips t
             JOIN users u ON u.id = t.user_id
             JOIN spiele s ON s.id = t.spiel_id
-            WHERE s.statuswort != 'geplant'
+            
             ORDER BY s.anstoss DESC, u.name ASC
 
-            
-        `);
+            `);
+
+
+// WHERE s.statuswort != 'geplant'
 
         res.json(result.rows);
 
