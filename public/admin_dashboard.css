@@ -19,7 +19,7 @@ main {
   grid-area: main;
   display: grid;
   /* grid-template-columns:minmax(100px, 1fr) 2.0fr 1.0fr 1.0fr ; */
-  grid-template-columns: 25% 45% 20% 10% ;
+  grid-template-columns: 20% 15% 40% 25% ;
    gap: 0.2rem;
 
   

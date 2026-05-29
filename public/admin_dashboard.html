@@ -4,9 +4,13 @@
     <meta charset="UTF-8">
     <title>Administrator Dashboard</title>
     <link rel="stylesheet" href="admin_dashboard.css">
-    <script src="/auth.js"></script>
-    <script src="/admin_dashboard.js"></script>
+    <!-- KORREKTUR: defer hinzugefügt für korrektes Timing beim Laden -->
+    <script src="/auth.js" defer></script>
+    <script src="/admin_dashboard.js" defer></script>
+   
+    <!-- KORREKTUR: Die fehlerhafte, unvollständige jsdelivr.net Zeile wurde GELÖSCHT -->
 </head>
+
 
 <body>
 <header>
@@ -19,8 +23,23 @@
 </header>
 
 
-
+</body>
 <main>
+
+<section id="spalte1" >
+<div class="gruppen-verwaltung">
+    <h2>⚙️ Drag & Drop Gruppenverwaltung</h2>
+
+    <!-- ➕ Neue Gruppe hinzufügen -->
+    <div class="add-box" style="margin-bottom: 15px;">
+        <input type="text" id="neuerGruppenNameInput" placeholder="Neue Gruppe eingeben...">
+        <button class="button" id="gruppeHinzufuegenBtn">Hinzufügen</button>
+    </div>
+
+    <!-- Die Drag-and-Drop Liste -->
+    <ul id="gruppenSortierenListe" style="list-style: none; padding: 0;"></ul>
+</div>
+</section>
 
     <section id="spalte2">
         <h2>Vereine</h2>
@@ -106,21 +125,6 @@
     <button type="submit">Speichern</button>
 </form>
 
-<!-- <h2>Benutzerverwaltung</h2>
-<form id="userForm">
-    <input type="text" id="userName" class="zeile1" placeholder="Name" required>
-    <input type="password" id="userPassword" class="zeile1" placeholder="Passwort" required>
-    <div class="zeile1">
-    <select id="userRole" >
-        <option value="tipper">Tipper</option>
-        <option value="admin">Admin</option>
-    </select>
-
-    <button type="submit">Benutzer anlegen</button>
-    </div>
-    
-</form> -->
-
 
 <table border="0">
     <thead>
@@ -134,10 +138,7 @@
 </table>
     </section>
 
-<section id="spalte5">
-<h2>Reserve</h2>
-</section>
-
-
 
 </main>
+<script src="/Sortable.min.js"></script>
+</body>

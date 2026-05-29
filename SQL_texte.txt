@@ -1,0 +1,46 @@
+******** gruppen_sort *****************
+DROP TABLE IF EXISTS gruppen_sort CASCADE;
+
+CREATE TABLE gruppen_sort (
+    id SERIAL PRIMARY KEY,
+    gruppenname VARCHAR(100) NOT NULL UNIQUE,
+    position INTEGER NOT NULL DEFAULT 0
+);
+
+*********spiele_aktuell***********
+
+
+DROP TABLE spiele_aktuell;
+
+TRUNCATE TABLE spiele_aktuell;
+
+CREATE TABLE spiele_aktuell (
+    id SERIAL PRIMARY KEY,
+    spieltag INTEGER DEFAULT 0,
+    kennung VARCHAR(200) UNIQUE NOT NULL,
+    gruppen_name VARCHAR(50) NOT NULL,
+    gruppen_position INTEGER DEFAULT 0,
+    home_id INTEGER DEFAULT 0,
+    gast_id INTEGER DEFAULT 0,
+    statuswort VARCHAR(50) NOT NULL,
+    tore_home INTEGER DEFAULT 0,
+    tore_gast INTEGER DEFAULT 0,
+    anstoss TIMESTAMPTZ
+);
+
+
+SELECT
+	s.id, 	-- Wichtig für das data-id Attribut im Frontend
+	g.gruppenname, 
+    s.kennung, 
+    s.statuswort,          
+    s.tore_home,
+    s.tore_gast,           
+    s.anstoss,
+    v_heim.vereinsname AS heimverein,
+    v_gast.vereinsname AS gastverein
+FROM spiele_aktuell s 
+LEFT JOIN vereine v_heim ON s.home_id = v_heim.id
+LEFT JOIN vereine v_gast ON s.gast_id = v_gast.id 
+LEFT JOIN gruppen_sort g ON s.gruppen_position = g.position 
+ORDER BY g.position ASC;

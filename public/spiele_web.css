@@ -7,6 +7,8 @@ header {
 
 background: white;
 color: black;
+  border-width: 1px;
+  border-color: rgb(110, 110, 151); /* Ändert nur die Farbe */
 border-style:  solid;
 padding: 1rem;
 width:auto
@@ -93,3 +95,11 @@ td {
   text-align: center;
   padding: 0.5rem;
 } 
+.buttonzeile
+{
+    display: flex;       /* Aktiviert Flexbox */
+    gap: 10px;  
+
+
+
+}

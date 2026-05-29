@@ -40,13 +40,15 @@ async function speicherProzess() {
 // ===============================
 // INIT
 // ===============================
-document.addEventListener("DOMContentLoaded", () => {
 
+// ===============================
+document.addEventListener("DOMContentLoaded", () => {
+    ladeGruppen();
     ladeVereine();
     ladeUser();
-    ladeGruppen();
     ladeSpiele();
 
+    // KORREKTUR: Alle Zuweisungen mit ?. abgesichert, damit fehlende HTML-Elemente das Skript nicht stoppen
     $("logoutBtn")?.addEventListener("click", logout);
 
     $("saveVerein")?.addEventListener("click", vereinSpeichern);
@@ -58,10 +60,20 @@ document.addEventListener("DOMContentLoaded", () => {
     $("saveSpiel")?.addEventListener("click", spielSpeichern);
     $("deleteSpiel")?.addEventListener("click", spielLoeschen);
     $("saveErgebnis")?.addEventListener("click", ergebnisSpeichernUndAuswerten);
-    $("userForm").addEventListener("submit", userSpeichern);
-    // $("userForm")?.addEventListener("submit", userAnlegen);
-
+    
+    // KORREKTUR: Hier fehlte das Fragezeichen vor dem Punkt!
+    $("userForm")?.addEventListener("submit", userSpeichern); 
+    
+    // Jetzt läuft der Code sicher bis hierhin durch:
+      ladeSortierGruppen(); 
+    
+    const addBtn = document.getElementById('gruppeHinzufuegenBtn');
+    if (addBtn) {
+        addBtn.addEventListener('click', dragGruppeHinzufuegen);
+    }
 });
+
+
 // ===============================
 // Logout
 // ===============================
@@ -74,7 +86,132 @@ function $(id) {
     return document.getElementById(id);
 }
 
-// synchronisiert mit app1 bis hierher
+// Überschreibt oder erweitert Ihre bisherige ladeGruppen-Funktion
+async function ladeSortierGruppen() {
+    try {
+        // KORREKTUR: Nutzt jetzt Ihre sichere api()-Funktion für die Abfrage
+        const gruppen = await api("/api/gruppen_sort");
+        console.log("Geladene Gruppen-Daten für Drag & Drop (sort):", gruppen);
+
+        const sortListe = document.getElementById('gruppenSortierenListe');
+        if (sortListe) {
+            sortListe.innerHTML = '';
+            gruppen.forEach(g => {
+                const li = document.createElement('li');
+                li.dataset.id = g.id;
+                
+                li.style.padding = "15px";
+                li.style.border = "1px solid #ddd";
+                li.style.borderRadius = "5px";
+                li.style.marginBottom = "10px";
+                li.style.background = "#eaeaea";
+                li.style.display = "flex";
+                li.style.justifyContent = "space-between";
+                li.style.alignItems = "center";
+
+                li.innerHTML = `
+                    <div style="display: flex; align-items: center;">
+                        <span class="handle" style="cursor: grab; margin-right: 15px; font-size: 20px; font-weight: bold;">☰</span>
+                        <span style="font-family: sans-serif; font-size: 16px; font-weight: bold;">${g.gruppenname}</span>
+                    </div>
+                    <button class="delete-gruppe-btn" onclick="dragGruppeLoeschen(${g.id})" style="color: white; background: red; border: none; font-weight: bold; border-radius: 4px; padding: 5px 10px; cursor: pointer;">✕</button>
+                `;
+                sortListe.appendChild(li);
+            });
+
+            sortableAktivieren();
+        }
+    } catch (error) {
+        console.error("Fehler beim Laden der Gruppen im Dashboard:", error);
+    }
+}
+
+function sortableAktivieren() {
+    const sortListe = document.getElementById('gruppenSortierenListe');
+    if (!sortListe) return;
+
+    if (typeof Sortable !== 'undefined') {
+        // Zerstört eine eventuell alte Sortable-Instanz, um Klick-Dopplungen zu vermeiden
+        if (sortListe.sortable) {
+            sortListe.sortable.destroy();
+        }
+
+        sortListe.sortable = new Sortable(sortListe, {
+            animation: 150,
+            ghostClass: 'dragging', 
+            handle: '.handle',      
+            onEnd: function() {
+                console.log("🖱️ Maus losgelassen! Neue Reihenfolge wird gespeichert...");
+                gruppenReihenfolgeSpeichern();
+            }
+        });
+        console.log("✅ SortableJS erfolgreich auf der Liste aktiviert.");
+    } else {
+        console.error("❌ SortableJS ist nicht geladen! Überprüfen Sie den <head> Ihrer HTML-Datei.");
+    }
+}
+
+async function gruppenReihenfolgeSpeichern() {
+    const sortListe = document.getElementById('gruppenSortierenListe');
+    if (!sortListe) return;
+
+    const ids = [...sortListe.children].map(el => parseInt(el.dataset.id, 10));
+    console.log("Sende neue ID-Reihenfolge an Server:", ids);
+
+    try {
+        // KORREKTUR: Auf sichere api() Funktion mit POST umgestellt
+        await api('/api/gruppen_sort/sortieren', {
+            method: 'POST',
+            body: JSON.stringify(ids)
+        });
+
+        console.log("💾 Reihenfolge erfolgreich in DB gespeichert!");
+        await ladeSortierGruppen();
+    } catch (error) {
+        console.error("Fehler beim Speichern der Reihenfolge:", error);
+        alert("Speichern der Reihenfolge fehlgeschlagen: " + error.message);
+    }
+}
+
+async function dragGruppeHinzufuegen() {
+    const input = document.getElementById('neuerGruppenNameInput');
+    if (!input) return;
+    const name = input.value.trim();
+
+    if (!name) return;
+
+    try {
+        // KORREKTUR: Auf sichere api() Funktion umgestellt, um Admin-Rechte mitzusenden
+        await api('/api/gruppen_sort', {
+            method: 'POST',
+            body: JSON.stringify({ name })
+        });
+
+        input.value = '';
+        await ladeSortierGruppen(); 
+        console.log("➕ Neue Gruppe erfolgreich hinzugefügt!");
+    } catch (error) {
+        console.error("Fehler beim Hinzufügen der Gruppe:", error);
+        alert("Hinzufügen fehlgeschlagen: " + error.message);
+    }
+}
+
+async function dragGruppeLoeschen(id) {
+    if (!confirm("Möchten Sie diese Gruppe wirklich löschen?")) return;
+
+    try {
+        // KORREKTUR: Auf sichere api() Funktion mit DELETE umgestellt
+        await api(`/api/gruppen_sort/${id}`, {
+            method: 'DELETE'
+        });
+
+        await ladeSortierGruppen();
+        console.log("🗑️ Gruppe erfolgreich gelöscht!");
+    } catch (error) {
+        console.error("Fehler beim Löschen der Gruppe:", error);
+        alert("Löschen fehlgeschlagen: " + error.message);
+    }
+}
 
 // ===============================
 // Gruppen
@@ -216,7 +353,7 @@ async function vereinLoeschen() {
 // Spiele
 // ===============================
 async function ladeSpiele() {
-    const spiele = await api("/api/spiele");
+    const spiele = await api('/api/spiele');
     console.log("👂 /api/spiele - Spiele:", spiele);
     $("spieleSelect").innerHTML = "";
     spiele.forEach(s => {

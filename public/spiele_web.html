@@ -11,7 +11,21 @@
 <body>
 <header>
     <h1>spiele_web ergänzen</h1>
+    <div class="buttonzeile">
     <button onclick="window.location.href='admin_dashboard.html'">zurück zum admin dashboard</button> 
+    <!-- <div class="simulation-box" style="margin: 20px 0; padding: 15px; border: 1px dashed #ffa500; background: #fffdf5;"> -->
+
+        <button class="button" id="simAllBeendenBtn" style="background-color: #ffa500; color: white;">
+            Alle geplanten Spiele beenden
+        </button>
+    
+    
+        <button class="button" id="simAllToreUebertragenBtn" style="background-color: #28a745; color: white; ">
+            Tore für alle beendeten Spiele übertragen
+        </button>
+
+    </div>
+
 </header>
 
 <main>
@@ -23,7 +37,7 @@
 
            <h3>Gruppen</h3>
     <div class="zeile1">
-        <input list="gruppenliste" id="gruppenSelect" placeholder="Gruppe wählen">
+        <input type="text" id="gruppenSelect" list="gruppenliste" placeholder="Gruppe wählen...">
         <datalist id="gruppenliste"></datalist>
     </div>
         <h3>spiele_web</h3>
@@ -52,7 +66,8 @@
                 <th>Gruppe</th>
                 <th>Kennung</th>
                 <th>Anstoss</th>
-                <th>Ergebniss</th>               
+                <th>Ergebniss</th> 
+                <th>Aktion</th>              
             </tr>
         </thead>
         <tbody id="SpieleTableBodyAktuell">

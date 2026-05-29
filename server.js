@@ -17,6 +17,7 @@ const cron = require("node-cron");
 const bcrypt = require("bcrypt");
 const cors = require("cors");
 const session = require("express-session");
+const format = require('pg-format');
 // ===============================
 // App
 // ===============================api/users
@@ -235,6 +236,49 @@ app.post("/api/logout", (req, res) => {
 app.get("/api/session", (req, res) => {
     res.json({ user: req.session.user || null });
 });
+// KORREKTUR: Von app.post auf app.put geändert, damit es zum Frontend passt
+app.put('/api/spiele_aktuell/sim/tore_uebertragen', async (req, res) => {
+    const { sim_home, sim_gast } = req.body;
+
+    try {
+        const result = await pool.query(
+            `UPDATE spiele_aktuell
+             SET tore_home = $1, tore_gast = $2
+             WHERE statuswort = 'beendet'
+             RETURNING *`,
+            [parseInt(sim_home, 10) || 0, parseInt(sim_gast, 10) || 0]
+        );
+
+        res.json({ 
+            success: true, 
+            message: `Tore wurden für ${result.rowCount} Spiele aktualisiert.` 
+        });
+    } catch (err) {
+        console.error("❌ /api/spiele_aktuell/sim/tore_uebertragen PUT Error:", err);
+        res.status(500).json({ error: "Datenbankfehler bei der Tor-Simulation" });
+    }
+});
+
+// 🧪 SIMULATION: Alle geplanten Spiele auf einmal beenden
+app.put('/api/spiele_aktuell/sim/alle_beenden', async (req, res) => {
+    try {
+        const result = await pool.query(
+            `UPDATE spiele_aktuell
+             SET statuswort = 'beendet'
+             WHERE statuswort = 'geplant'
+             RETURNING *`
+        );
+
+        res.json({ 
+            success: true, 
+            message: `${result.rowCount} Spiele wurden erfolgreich beendet.`,
+            updatedRows: result.rowCount 
+        });
+    } catch (err) {
+        console.error("❌ /api/spiele_aktuell/sim/alle_beenden PUT Error:", err);
+        res.status(500).json({ error: "Datenbankfehler bei der Simulation" });
+    }
+});
 
 // 2. Alle Tipps abrufen (Erfordert Login, Sichtbarkeit für alle Teilnehmer)
 app.get("/api/extratip", requireLogin, async (req, res) => {
@@ -311,6 +355,37 @@ app.get("/api/spiele/beendet", async (req, res) => {
         res.status(500).json({ error: "Fehler beim Laden der Daten" });
     }
 });
+
+// ⚽ KORREKTUR: Diese Route MUSS im Server existieren, um Ergebnisse und den Status 'ausgewertet' zu speichern
+app.put('/api/spiele_aktuell/ergebnis/:id', async (req, res) => {
+    const { id } = req.params;
+    const { tore_home, tore_gast, statuswort } = req.body;
+
+    try {
+        const result = await pool.query(
+            `UPDATE spiele_aktuell
+             SET tore_home = $1, tore_gast = $2, statuswort = $3
+             WHERE id = $4
+             RETURNING *`,
+            [
+                parseInt(tore_home, 10), 
+                parseInt(tore_gast, 10), 
+                statuswort || 'ausgewertet', 
+                parseInt(id, 10)
+            ]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: "Spiel nicht gefunden" });
+        }
+
+        res.json({ success: true, message: "Ergebnis erfolgreich aktualisiert", data: result.rows });
+    } catch (err) {
+        console.error("❌ /api/spiele_aktuell/ergebnis/:id PUT Error:", err);
+        res.status(500).json({ error: "Datenbankfehler beim Speichern des Ergebnisses" });
+    }
+});
+
 
 app.post("/api/spiele/beendet/update", async (req, res) => {
     const updates = req.body;
@@ -394,10 +469,10 @@ app.get("/api/gruppen", requireLogin, async (req, res) => {
 
 
 
-app.get("/api/gruppen_sort", requireAdmin, async (req, res) => {
+app.get("/api/gruppen_sort", async (req, res) => {
     try {
         const result = await pool.query(
-            "SELECT id, gruppenname,position FROM gruppen_sort ORDER BY position"
+            "SELECT id, gruppenname, position FROM gruppen_sort ORDER BY position"
         );
         res.json(result.rows);
     } catch (err) {
@@ -405,6 +480,88 @@ app.get("/api/gruppen_sort", requireAdmin, async (req, res) => {
         res.status(500).json({ error: "Gruppen laden fehlgeschlagen" });
     }
 });
+
+app.post('/api/gruppen_sort/sortieren', async (req, res) => {
+    const ids = req.body; // Das Array mit den IDs aus dem Frontend
+
+    try {
+        for (let i = 0; i < ids.length; i++) {
+            await pool.query(`
+                UPDATE gruppen_sort
+                SET position = $1
+                WHERE id = $2
+            `, [i + 1, ids[i]]);
+        }
+        res.json({ success: true, message: "Reihenfolge aktualisiert" });
+    } catch (err) {
+        console.error("❌ /api/gruppen_sort/sortieren POST Error:", err);
+        res.status(500).json({ error: "Fehler beim Speichern der Reihenfolge" });
+    }
+});
+
+// ➕ NEU: Neue Gruppe in die Datenbank eintragen
+app.post('/api/gruppen_sort', async (req, res) => {
+    const { name } = req.body;
+
+    try {
+        if (!name) {
+            return res.status(400).json({ error: "Name fehlt" });
+        }
+
+        await pool.query(`
+            INSERT INTO gruppen_sort (gruppenname, position)
+            VALUES ($1, (SELECT COALESCE(MAX(position), 0) + 1 FROM gruppen_sort))
+        `, [name]);
+
+        res.json({ success: true, message: "Gruppe erfolgreich hinzugefügt" });
+    } catch (err) {
+        console.error("❌ /api/gruppen_sort POST Error:", err);
+        res.status(500).json({ error: "Fehler beim Erstellen der Gruppe" });
+    }
+});
+
+app.delete('/api/gruppen_sort/:id', async (req, res) => {
+    const id = req.params.id;
+
+    try {
+        // Transaktion starten, damit beim Ausfall alles zurückgesetzt wird
+        await pool.query('BEGIN');
+
+        // 1. Die ausgewählte Gruppe anhand der ID löschen
+        await pool.query(`
+            DELETE FROM gruppen_sort
+            WHERE id = $1
+        `, [parseInt(id, 10)]);
+
+        // 2. Alle verbleibenden Gruppen sortiert nach der alten Position holen
+        const result = await pool.query(`
+            SELECT id FROM gruppen_sort ORDER BY position
+        `);
+
+        const ids = result.rows.map(r => r.id);
+
+        // 3. Positionen lückenlos (1, 2, 3...) neu vergeben
+        for (let i = 0; i < ids.length; i++) {
+            await pool.query(`
+                UPDATE gruppen_sort
+                SET position = $1
+                WHERE id = $2
+            `, [i + 1, ids[i]]);
+        }
+
+        // Transaktion erfolgreich abschließen
+        await pool.query('COMMIT');
+        
+        res.json({ success: true, message: "Gruppe gelöscht und Positionen angepasst" });
+    } catch (err) {
+        // Bei einem Fehler alle Änderungen verwerfen
+        await pool.query('ROLLBACK');
+        console.error("❌ /api/gruppen_sort/:id DELETE Error:", err);
+        res.status(500).json({ error: "Fehler beim Löschen der Gruppe" });
+    }
+});
+
+
 
 app.post("/api/gruppen", requireAdmin, async (req, res) => {
     const { gruppenname } = req.body; 
@@ -443,7 +600,7 @@ app.delete("/api/gruppen/:id", requireAdmin, async (req, res) => {
 app.get("/api/vereine", requireLogin, async (req, res) => {
     try {
         const result = await pool.query(
-            "SELECT id, vereinsname, url FROM vereine ORDER BY vereinsname"
+            "SELECT id, vereinsname, url,kurzname FROM vereine ORDER BY vereinsname"
         );
         res.json(result.rows);
     } catch (err) {
@@ -496,10 +653,40 @@ app.get("/api/spiele_web", requireAdmin, async (req, res) => {
   }
 });
 
+app.get("/api/spiele_aktuell", requireAdmin, async (req, res) => {
+  try {
+ 
+   
+    const result = await pool.query(`
+ SELECT
+    s.id,
+    s.spieltag,   
+    s.kennung, 
+    s.gruppen_name AS g_name,
+    s.gruppen_position AS g_position, -- Liefert die Position für das Frontend
+    s.home_id,
+    s.gast_id,
+    s.statuswort,
+    s.tore_home,
+    s.tore_gast,
+    s.anstoss,
+    v_heim.vereinsname AS heimverein,
+    v_gast.vereinsname AS gastverein
+FROM spiele_aktuell s 
+LEFT JOIN vereine v_heim ON s.home_id = v_heim.id
+LEFT JOIN vereine v_gast ON s.gast_id = v_gast.id 
+ORDER BY s.gruppen_position ASC, s.kennung ASC; 
 
+`);
+    res.json(result.rows);
+  } catch (err) {
+    console.error("❌ /spiele_aktuell:", err);
+    res.status(500).json({ error: "spiele_aktuell laden fehlgeschlagen" });
+  }
+});
 // ===============================
 // Spiele + eigene Tipps neu
-// ===============================
+// =============================
 app.get("/api/spiele", requireLogin, async (req, res) => {
     try {
         const userId = req.session.user.id;
@@ -521,7 +708,7 @@ app.get("/api/spiele", requireLogin, async (req, res) => {
             LEFT JOIN tips t
               ON t.spiel_id = s.id  
              AND t.user_id = $1
-            ORDER BY s.statuswort DESC
+            ORDER BY s.anstoss DESC
         `, [userId]);
 
         res.json(result.rows);
@@ -573,7 +760,88 @@ app.post("/api/spiele", requireAdmin, async (req, res) => {
     }
 });
 
-// synchronisiert mit app1 bis hierher
+
+
+app.post('/api/spiele_aktuell', async (req, res) => {
+    const {
+        spieltag,
+        kennung,
+        statuswort,
+        anstoss,    
+        gruppen_id, // KORREKTUR: Liest 'gruppen_id' aus dem Request-Body (enthält den Text "Montagsspiele")
+        home_id,
+        gast_id,
+        tore_home,
+        tore_gast
+    } = req.body;
+
+    try {
+        const parsedSpieltag = parseInt(spieltag, 10);
+        const safeSpieltag = Number.isNaN(parsedSpieltag) ? 0 : parsedSpieltag;
+
+        const parsedHomeId = parseInt(home_id, 10);
+        const safeHomeId = Number.isNaN(parsedHomeId) ? 0 : parsedHomeId;
+
+        const parsedGastId = parseInt(gast_id, 10);
+        const safeGastId = Number.isNaN(parsedGastId) ? 0 : parsedGastId;
+
+        const parsedToreHome = parseInt(tore_home, 10);
+        const safeToreHome = Number.isNaN(parsedToreHome) ? 0 : parsedToreHome;
+
+        const parsedToreGast = parseInt(tore_gast, 10);
+        const safeToreGast = Number.isNaN(parsedToreGast) ? 0 : parsedToreGast;
+
+        // KORREKTUR: Wir nutzen die Variable 'gruppen_id' (die den Text enthält) für den SQL-Parameter $5
+        const result = await pool.query(
+            `INSERT INTO spiele_aktuell
+             (spieltag, kennung, statuswort, anstoss, gruppen_name, gruppen_position, home_id, gast_id, tore_home, tore_gast)
+             VALUES (
+                $1, $2, $3, $4, $5::VARCHAR, 
+                COALESCE((SELECT position FROM gruppen_sort WHERE TRIM(gruppenname) ILIKE TRIM($5::VARCHAR) LIMIT 1), 0), 
+                $6, $7, $8, $9
+             )
+             ON CONFLICT (kennung)
+             DO NOTHING
+             RETURNING *`,
+            [
+                safeSpieltag,
+                kennung,
+                statuswort || 'geplant',
+                anstoss,
+                gruppen_id ? gruppen_id.trim() : 'Unbekannt', // KORREKTUR: Nutzt hier gruppen_id
+                safeHomeId,
+                safeGastId,
+                safeToreHome,
+                safeToreGast
+            ]
+        );
+
+        res.status(201).json({ success: true, data: result.rows });
+    } catch (err) {
+        console.error("❌ /api/spiele_aktuell POST: error:", err);
+        res.status(500).json({ error: "Datenbankfehler beim Speichern" });
+    }
+});
+
+app.delete('/api/spiele_aktuell/:id', async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const result = await pool.query(
+            'DELETE FROM spiele_aktuell WHERE id = $1 RETURNING *',
+            [parseInt(id, 10)]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: "Spiel nicht gefunden" });
+        }
+
+        res.json({ success: true, message: "Spiel aus Planung gelöscht" });
+    } catch (err) {
+        console.error("❌ /api/spiele_aktuell DELETE: error:", err);
+        res.status(500).json({ error: "Datenbankfehler beim Löschen" });
+    }
+});
 
 app.patch("/api/spiele/:id/ergebnis", requireAdmin, async (req, res) => {
     const spielId = req.params.id;
@@ -847,6 +1115,35 @@ app.delete("/api/users/:id", requireAdmin, async (req, res) => {
     await pool.query("DELETE FROM users WHERE id=$1", [req.params.id]);
     res.json({ success: true });
 });
+
+// GET-Route zur Ermittlung der Vereins-ID über den Kurznamen
+app.get('/api/vereins_id/:kurzname', async (req, res) => {
+    const { kurzname } = req.params;
+
+    try {
+        // SQL-Abfrage an Ihre pg-Datenbank
+        const result = await pool.query('SELECT id FROM vereine WHERE kurzname = $1;', [kurzname]);
+
+        // Prüfen, ob ein Verein gefunden wurde
+        if (result.rows.length === 0) {
+            return res.status(404).json({ success: false, error: 'Verein nicht gefunden' });
+        }
+
+        // Die gefundene ID an das Frontend zurücksenden
+        res.json({ success: true, id: result.rows[0].id });
+        
+    } catch (error) {
+        console.error('Fehler bei der ID-Abfrage:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+
+
+
+
+
+
 
 // ===============================
 // Start
